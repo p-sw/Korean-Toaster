@@ -1,0 +1,213 @@
+import tkinter as tk
+from tkinter import ttk
+import keyboard
+import time
+import threading
+from PIL import Image
+from pystray import MenuItem, Menu, Icon
+import ctypes
+import json
+
+TRANSPARENT_COLOR = "#123456"
+BACKGROUND_COLOR = "#333333"
+
+hllDll = ctypes.WinDLL("User32.dll", use_last_error=True)
+VK_HANGUEL = 0x15
+KOREAN_MODE = -127
+ENGLISH_MODE = -128
+class LanguageDetector:
+    key_state = 0
+    def update(self):
+        self.key_state = hllDll.GetKeyState(VK_HANGUEL)
+    def is_hangul(self):
+        return self.key_state == KOREAN_MODE
+    def is_english(self):
+        return self.key_state == ENGLISH_MODE
+    def get_current_language(self):
+        return "한" if self.is_hangul() else 'En' if self.is_english() else None
+    def get_current_language_str(self):
+        return result if (result := self.get_current_language()) is not None else '?'
+
+class RoundFrame(tk.Canvas):
+    def __init__(self, parent, radius=20, bg=BACKGROUND_COLOR, **kwargs):
+        super().__init__(parent, **kwargs)
+        self.radius = radius
+        self.bg = bg
+        self.configure(bg=TRANSPARENT_COLOR, highlightthickness=0, bd=0)
+        self.bind("<Configure>", self._draw_rounded_rect)
+
+    def _draw_rounded_rect(self, event=None):
+        self.delete("all")
+        width = self.winfo_width()
+        height = self.winfo_height()
+
+        self.create_rounded_rect(0, 0, width, height, self.radius, fill=self.bg)
+    
+    def create_rounded_rect(self, x1, y1, x2, y2, radius, **kwargs):
+        points = [
+            x1 + radius, y1,
+            x2 - radius, y1,
+            x2, y1,
+            x2, y1 + radius,
+            x2, y2 - radius,
+            x2, y2,
+            x2 - radius, y2,
+            x1 + radius, y2,
+            x1, y2,
+            x1, y2 - radius,
+            x1, y1 + radius,
+            x1, y1,
+        ]
+        return self.create_polygon(points, smooth=True, **kwargs)
+
+class Configuration:
+    fade_duration = 0.5
+    window_size_ratio = 1/8
+
+    @property
+    def data(self):
+        return {
+            "fade_duration": self.fade_duration,
+            "window_size_ratio": self.window_size_ratio,
+        }
+
+    def load_from_json(self):
+        try:
+            with open("config.json", "r") as f:
+                data = json.load(f)
+                self.fade_duration = data.get("fade_duration", self.fade_duration)
+                self.window_size_ratio = data.get("window_size_ratio", self.window_size_ratio)
+        except FileNotFoundError:
+            self.save_to_json()
+    
+    def save_to_json(self):
+        with open("config.json", "w") as f:
+            json.dump(self.data, f)
+
+class App:
+    is_pressed = False
+    fade_step = 0.02
+    fade_timer = None
+    
+    stopped = False
+
+    def __init__(self):
+        self.conf = Configuration()
+        self.conf.load_from_json()
+
+        self.language_detector = LanguageDetector()
+
+        self.root = tk.Tk()
+        self.root.overrideredirect(True)
+        self.root.attributes("-topmost", True)
+        self.root.attributes('-alpha', 0.0)
+        self.root.configure(bg=TRANSPARENT_COLOR)
+        self.root.attributes('-transparentcolor', TRANSPARENT_COLOR)
+
+        self.screen_width = self.root.winfo_screenwidth()
+        self.screen_height = self.root.winfo_screenheight()
+        self.width, self.height = self.screen_width // 8, self.screen_height // 8
+
+        self.frame = RoundFrame(self.root, radius=20, bg=BACKGROUND_COLOR, width=self.width, height=self.height)
+        self.frame.pack(expand=True, fill=tk.BOTH)
+
+        self.style = ttk.Style()
+        self.style.configure("Language.TLabel", font=('Arial', 24, 'bold'), padding=20, foreground='white', background=BACKGROUND_COLOR)
+        
+        self.label = ttk.Label(self.frame, text=self.language_detector.get_current_language_str(), style="Language.TLabel")
+        self.label.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+
+        self.set_root_geometry()
+
+        self.keyboard_thread = threading.Thread(target=self.monitor_keyboard)
+        self.keyboard_thread.daemon = True
+        self.keyboard_thread.start()
+
+        self.setup_tray_icon()
+    
+    def set_fadeout_speed(self, speed):
+        self.conf.fade_duration = speed
+        self.conf.save_to_json()
+    
+    def set_root_geometry(self):
+        self.root.geometry(f"{int(self.screen_width * self.conf.window_size_ratio)}x{int(self.screen_height * self.conf.window_size_ratio)}+{int(self.screen_width // 2 - self.width // 2)}+{int(self.screen_height - self.height - 50)}")
+    
+    def set_window_size(self, size):
+        self.conf.window_size_ratio = size
+        self.set_root_geometry()
+        self.conf.save_to_json()
+
+    def setup_tray_icon(self):
+        image = Image.new('RGB', (64, 64), 'white')
+        menu = (
+            MenuItem(
+                '창 애니메이션 속도',
+                Menu(
+                    MenuItem('끄기', lambda: self.set_fadeout_speed(0), radio=True, checked=lambda x: self.conf.fade_duration == 0),
+                    MenuItem('0.5초(기본)', lambda: self.set_fadeout_speed(0.5), radio=True, checked=lambda x: self.conf.fade_duration == 0.5, default=True),
+                    MenuItem('1초', lambda: self.set_fadeout_speed(1), radio=True, checked=lambda x: self.conf.fade_duration == 1),
+                    MenuItem('2초', lambda: self.set_fadeout_speed(2), radio=True, checked=lambda x: self.conf.fade_duration == 2),
+                    MenuItem('3초', lambda: self.set_fadeout_speed(3), radio=True, checked=lambda x: self.conf.fade_duration == 3),
+                )
+            ),
+            MenuItem(
+                '창 크기',
+                Menu(
+                    MenuItem('1/4', lambda: self.set_window_size(1/4), radio=True, checked=lambda x: self.conf.window_size_ratio == 1/4),
+                    MenuItem('1/6', lambda: self.set_window_size(1/6), radio=True, checked=lambda x: self.conf.window_size_ratio == 1/6),
+                    MenuItem('1/8(기본)', lambda: self.set_window_size(1/8), radio=True, default=True, checked=lambda x: self.conf.window_size_ratio == 1/8),
+                )
+            ),
+            MenuItem('설정 다시 불러오기', self.conf.load_from_json),
+            MenuItem('종료', self.quit),
+        )
+
+        self.icon = Icon("KaretLang", image, "KaretLang", menu)
+        self.tray_thread = threading.Thread(target=self.icon.run)
+        self.tray_thread.daemon = True
+        self.tray_thread.start()
+    
+    def quit(self):
+        self.icon.stop()
+        self.root.destroy()
+        self.stopped = True
+        self.keyboard_thread.join()
+    
+    def show_popup(self, text):
+        if self.fade_timer:
+            self.root.after_cancel(self.fade_timer)
+        
+        self.label.config(text=text)
+        self.root.attributes('-alpha', 1.0)
+
+        self.fade_timer = self.root.after(500, self.fade_out)
+
+    def fade_out(self):
+        steps = int(self.conf.fade_duration / self.fade_step)
+        remembered_pressed = self.is_pressed
+        for i in range(steps, -1, -1):
+            if remembered_pressed != self.is_pressed:
+                return
+            alpha = i / steps
+            self.root.attributes('-alpha', alpha)
+            self.root.update()
+            time.sleep(self.fade_step)
+    
+    def monitor_keyboard(self):
+        while not self.stopped:
+            if not self.is_pressed and keyboard.is_pressed('right alt'):
+                self.language_detector.update()
+                if (key := self.language_detector.get_current_language()) is None:
+                    continue
+                self.is_pressed = True
+                self.show_popup(key)
+            elif self.is_pressed and not keyboard.is_pressed('right alt'):
+                self.is_pressed = False
+            time.sleep(0.01)
+
+    def run(self):
+        self.root.mainloop()
+
+if __name__ == "__main__":
+    app = App()
+    app.run()
