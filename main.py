@@ -6,19 +6,26 @@ import threading
 from PIL import Image
 from pystray import MenuItem, Menu, Icon
 import ctypes
+import ctypes.wintypes
 import json
 
 TRANSPARENT_COLOR = "#123456"
 BACKGROUND_COLOR = "#333333"
 
-hllDll = ctypes.WinDLL("User32.dll", use_last_error=True)
+hllDll = ctypes.windll.user32
+immDll = ctypes.windll.imm32
+IMC_GETCONVERSIONMODE = 0x0001
+WM_IME_CONTROL = 643
 VK_HANGUEL = 0x15
-KOREAN_MODE = -127
-ENGLISH_MODE = -128
+KOREAN_MODE = 1
+ENGLISH_MODE = 0
 class LanguageDetector:
     key_state = 0
     def update(self):
-        self.key_state = hllDll.GetKeyState(VK_HANGUEL)
+        hWnd = hllDll.GetForegroundWindow()
+        hIMEWnd = immDll.ImmGetDefaultIMEWnd(hWnd)
+        conversion_status = hllDll.SendMessageW(hIMEWnd, WM_IME_CONTROL, IMC_GETCONVERSIONMODE, 0)
+        self.key_state = conversion_status
     def is_hangul(self):
         return self.key_state == KOREAN_MODE
     def is_english(self):
@@ -196,6 +203,7 @@ class App:
     def monitor_keyboard(self):
         while not self.stopped:
             if not self.is_pressed and keyboard.is_pressed('right alt'):
+                time.sleep(0.01)
                 self.language_detector.update()
                 if (key := self.language_detector.get_current_language()) is None:
                     continue
