@@ -203,7 +203,7 @@ class App:
     def monitor_keyboard(self):
         while not self.stopped:
             if not self.is_pressed and keyboard.is_pressed('right alt'):
-                time.sleep(0.01)
+                time.sleep(0.01) # make sure ime mode is updated before calling SendMessage
                 self.language_detector.update()
                 if (key := self.language_detector.get_current_language()) is None:
                     continue
