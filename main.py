@@ -1,4 +1,5 @@
 import tkinter as tk
+import tkinter.font
 from tkinter import ttk
 import keyboard
 import time
@@ -8,6 +9,12 @@ from pystray import MenuItem, Menu, Icon
 import ctypes
 import ctypes.wintypes
 import json
+import pyglet
+
+def build_resource(p):
+    return "_internal/" + p
+
+pyglet.font.add_file(build_resource("Pretendard-Regular.otf"))
 
 TRANSPARENT_COLOR = "#123456"
 BACKGROUND_COLOR = "#333333"
@@ -45,7 +52,7 @@ class LanguageDetector:
     def is_english(self):
         return self.key_state == ENGLISH_MODE
     def get_current_language(self):
-        return "한" if self.is_hangul() else 'En' if self.is_english() else None
+        return "가" if self.is_hangul() else 'A' if self.is_english() else None
     def get_current_language_str(self):
         return result if (result := self.get_current_language()) is not None else '?'
 
@@ -138,8 +145,10 @@ class App:
         self.frame = RoundFrame(self.root, radius=20, bg=BACKGROUND_COLOR, width=self.width, height=self.height)
         self.frame.pack(expand=True, fill=tk.BOTH)
 
+        pretendard = tkinter.font.Font(family='Pretendard', size=24, weight='normal')
+
         self.style = ttk.Style()
-        self.style.configure("Language.TLabel", font=('Arial', 24, 'bold'), padding=20, foreground='white', background=BACKGROUND_COLOR)
+        self.style.configure("Language.TLabel", font=pretendard, padding=20, foreground='white', background=BACKGROUND_COLOR)
         
         self.label = ttk.Label(self.frame, text=self.language_detector.get_current_language_str(), style="Language.TLabel")
         self.label.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
@@ -175,7 +184,7 @@ class App:
         self.conf.save_to_json()
 
     def setup_tray_icon(self):
-        image = Image.open("_internal/icon.png")
+        image = Image.open(build_resource("icon.png"))
         menu = (
             MenuItem(
                 '창 애니메이션 속도',
