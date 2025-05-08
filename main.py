@@ -12,6 +12,11 @@ import json
 TRANSPARENT_COLOR = "#123456"
 BACKGROUND_COLOR = "#333333"
 
+class E_MONITORCONF:
+    PRIMARY = 1
+    CURSOR = 2
+    POINTER = 3
+
 hllDll = ctypes.windll.user32
 immDll = ctypes.windll.imm32
 IMC_GETCONVERSIONMODE = 0x0001
@@ -70,12 +75,14 @@ class RoundFrame(tk.Canvas):
 class Configuration:
     fade_duration = 0.5
     window_size_ratio = 1/8
+    monitor_conf = E_MONITORCONF.PRIMARY
 
     @property
     def data(self):
         return {
             "fade_duration": self.fade_duration,
             "window_size_ratio": self.window_size_ratio,
+            "monitor_conf": self.monitor_conf,
         }
 
     def load_from_json(self):
@@ -84,6 +91,7 @@ class Configuration:
                 data = json.load(f)
                 self.fade_duration = data.get("fade_duration", self.fade_duration)
                 self.window_size_ratio = data.get("window_size_ratio", self.window_size_ratio)
+                self.monitor_conf = data.get("monitor_conf", self.monitor_conf)
         except FileNotFoundError:
             self.save_to_json()
     
