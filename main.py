@@ -15,11 +15,20 @@ BACKGROUND_COLOR = "#333333"
 class E_MONITORCONF:
     PRIMARY = 1
     CURSOR = 2
-    POINTER = 3
+    FOCUSED = 3
+
+class MONITORINFO(ctypes.Structure):
+    _fields_ = [
+        ("cbSize", ctypes.wintypes.DWORD),
+        ("rcMonitor", ctypes.wintypes.RECT),
+        ("rcWork", ctypes.wintypes.RECT),
+        ("dwFlags", ctypes.wintypes.DWORD)
+    ]
 
 hllDll = ctypes.windll.user32
 immDll = ctypes.windll.imm32
 IMC_GETCONVERSIONMODE = 0x0001
+MONITOR_DEFAULTTONEAREST = 0x00000002
 WM_IME_CONTROL = 643
 VK_HANGUEL = 0x15
 KOREAN_MODE = 1
@@ -144,11 +153,25 @@ class App:
         self.conf.fade_duration = speed
         self.conf.save_to_json()
     
-    def set_root_geometry(self):
-        self.root.geometry(f"{int(self.screen_width * self.conf.window_size_ratio)}x{int(self.screen_height * self.conf.window_size_ratio)}+{int(self.screen_width // 2 - self.width // 2)}+{int(self.screen_height - self.height - 50)}")
+    def set_root_geometry(self, screen_x=0, screen_y=0, screen_width=None, screen_height=None):
+        if screen_width is None: screen_width = self.screen_width
+        if screen_height is None: screen_height = self.screen_height
+
+        y_padding = 50
+
+        width = int(screen_width * self.conf.window_size_ratio)
+        height = int(screen_height * self.conf.window_size_ratio)
+        x = int(screen_width // 2 - width // 2) + screen_x
+        y = int(screen_height - height - y_padding) + screen_y
+        self.root.geometry(f"{width}x{height}+{x}+{y}")
     
     def set_window_size(self, size):
         self.conf.window_size_ratio = size
+        self.set_root_geometry()
+        self.conf.save_to_json()
+    
+    def set_monitor_conf(self, val):
+        self.conf.monitor_conf = val
         self.set_root_geometry()
         self.conf.save_to_json()
 
@@ -192,6 +215,24 @@ class App:
         if self.fade_timer:
             self.root.after_cancel(self.fade_timer)
         
+        if self.conf.monitor_conf in [E_MONITORCONF.CURSOR, E_MONITORCONF.FOCUSED]:
+            minfo = MONITORINFO()
+            minfo.cbSize = ctypes.sizeof(MONITORINFO)
+            if self.conf.monitor_conf == E_MONITORCONF.CURSOR:
+                cursor_pos = ctypes.wintypes.POINT()
+                hllDll.GetCursorPos(ctypes.byref(cursor_pos))
+                hmonitor = hllDll.MonitorFromPoint(cursor_pos, MONITOR_DEFAULTTONEAREST)
+            elif self.conf.monitor_conf == E_MONITORCONF.FOCUSED:
+                hwnd = hllDll.GetForegroundWindow()
+                hmonitor = hllDll.MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST)
+            hllDll.GetMonitorInfoW(hmonitor, ctypes.byref(minfo))
+            self.set_root_geometry(
+                minfo.rcMonitor.left,
+                minfo.rcMonitor.top,
+                minfo.rcMonitor.right,
+                minfo.rcMonitor.bottom
+            )
+
         self.label.config(text=text)
         self.root.attributes('-alpha', 1.0)
 
