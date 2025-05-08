@@ -109,11 +109,11 @@ class Configuration:
             json.dump(self.data, f)
 
 class App:
-    is_pressed = False
     fade_step = 0.02
     fade_timer = None
-    
-    stopped = False
+    fading = False
+
+    hooks = []
 
     def __init__(self):
         self.conf = Configuration()
@@ -130,6 +130,9 @@ class App:
 
         self.screen_width = self.root.winfo_screenwidth()
         self.screen_height = self.root.winfo_screenheight()
+
+        self.set_root_geometry()
+
         self.width, self.height = self.screen_width // 8, self.screen_height // 8
 
         self.frame = RoundFrame(self.root, radius=20, bg=BACKGROUND_COLOR, width=self.width, height=self.height)
@@ -141,11 +144,7 @@ class App:
         self.label = ttk.Label(self.frame, text=self.language_detector.get_current_language_str(), style="Language.TLabel")
         self.label.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
 
-        self.set_root_geometry()
-
-        self.keyboard_thread = threading.Thread(target=self.monitor_keyboard)
-        self.keyboard_thread.daemon = True
-        self.keyboard_thread.start()
+        self.register_keyboard_monitor()
 
         self.setup_tray_icon()
     
@@ -216,12 +215,13 @@ class App:
     def quit(self):
         self.icon.stop()
         self.root.destroy()
-        self.stopped = True
-        self.keyboard_thread.join()
+        self.unregister_keyboard_monitor()
     
     def show_popup(self, text):
         if self.fade_timer:
             self.root.after_cancel(self.fade_timer)
+        if self.fading:
+            self.fading = False
         
         if self.conf.monitor_conf in [E_MONITORCONF.CURSOR, E_MONITORCONF.FOCUSED]:
             minfo = MONITORINFO()
@@ -247,28 +247,31 @@ class App:
         self.fade_timer = self.root.after(500, self.fade_out)
 
     def fade_out(self):
+        self.fading = True
         steps = int(self.conf.fade_duration / self.fade_step)
-        remembered_pressed = self.is_pressed
         for i in range(steps, -1, -1):
-            if remembered_pressed != self.is_pressed:
+            if not self.fading:
                 return
             alpha = i / steps
             self.root.attributes('-alpha', alpha)
             self.root.update()
             time.sleep(self.fade_step)
     
-    def monitor_keyboard(self):
-        while not self.stopped:
-            if not self.is_pressed and keyboard.is_pressed('right alt'):
+    def register_keyboard_monitor(self):
+        def callback(e: keyboard.KeyboardEvent):
+            if e.event_type == 'down':
                 time.sleep(0.01) # make sure ime mode is updated before calling SendMessage
                 self.language_detector.update()
                 if (key := self.language_detector.get_current_language()) is None:
-                    continue
-                self.is_pressed = True
+                    return
                 self.show_popup(key)
-            elif self.is_pressed and not keyboard.is_pressed('right alt'):
-                self.is_pressed = False
-            time.sleep(0.01)
+
+        self.hooks.append(keyboard.hook_key(56, callback)) # right alt
+        self.hooks.append(keyboard.hook_key(242, callback)) # hangeul
+    
+    def unregister_keyboard_monitor(self):
+        for hook in self.hooks:
+            keyboard.unhook(hook)
 
     def run(self):
         self.root.mainloop()
