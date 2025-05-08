@@ -4,7 +4,11 @@ from typing import Literal, Callable
 import src.constants as c
 
 class Configuration:
-    type FieldType = Literal["fade_duration"] | Literal["window_size_ratio"] | Literal["monitor_conf"]
+    type FieldType = \
+        Literal["fade_duration"] | \
+        Literal["window_lifetime"] | \
+        Literal["window_size_ratio"] | \
+        Literal["monitor_conf"]
     type ValueType = int
     type Listener = Callable[[ValueType], None]
     
@@ -12,6 +16,7 @@ class Configuration:
     __listeners: dict[FieldType, list[tuple[str, Listener]]] = {}
     _fields_: list[tuple[FieldType, ValueType]] = [
         ("fade_duration", 0.5),
+        ("window_lifetime", 0.5),
         ("window_size_ratio", 1/8),
         ("monitor_conf", c.E_MONITORCONF.PRIMARY)
     ]

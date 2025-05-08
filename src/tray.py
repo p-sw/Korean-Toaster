@@ -27,9 +27,24 @@ class AppTray:
             self.conf.monitor_conf = val
         return _
 
+    def set_window_lifetime(self, time):
+        def _():
+            self.conf.window_lifetime = time
+        return _
+
     def setup_tray_icon(self):
         image = Image.open(build_resource("icon.png"))
         menu = (
+            MenuItem(
+                '창 유지 시간',
+                Menu(
+                    MenuItem('0초', self.set_window_lifetime(0), radio=True, checked=lambda x: self.conf.window_lifetime == 0),
+                    MenuItem('0.5초', self.set_window_lifetime(0.5), radio=True, checked=lambda x: self.conf.window_lifetime == 0.5, default=True),
+                    MenuItem('1초', self.set_window_lifetime(1), radio=True, checked=lambda x: self.conf.window_lifetime == 1),
+                    MenuItem('2초', self.set_window_lifetime(2), radio=True, checked=lambda x: self.conf.window_lifetime == 2),
+                    MenuItem('3초', self.set_window_lifetime(3), radio=True, checked=lambda x: self.conf.window_lifetime == 3),
+                )
+            ),
             MenuItem(
                 '창 애니메이션 속도',
                 Menu(

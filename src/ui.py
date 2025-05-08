@@ -99,7 +99,7 @@ class AppUI:
         self.label.config(text=text)
         self.root.attributes('-alpha', 1.0)
 
-        self.fade_timer = self.root.after(500, self.fade_out)
+        self.fade_timer = self.root.after(int(self.conf.window_lifetime * 1000), self.fade_out)
 
     def fade_out(self):
         if self.conf.fade_duration == 0:
