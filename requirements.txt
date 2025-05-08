@@ -1,3 +1,4 @@
 keyboard==0.13.5
 Pillow==11.2.1
 pystray==0.19.5
+pyglet==2.1.6
