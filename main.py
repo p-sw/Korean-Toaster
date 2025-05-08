@@ -175,7 +175,7 @@ class App:
         self.conf.save_to_json()
 
     def setup_tray_icon(self):
-        image = Image.new('RGB', (64, 64), 'white')
+        image = Image.open("icon.png")
         menu = (
             MenuItem(
                 '창 애니메이션 속도',
@@ -207,7 +207,7 @@ class App:
             MenuItem('종료', self.quit),
         )
 
-        self.icon = Icon("KaretLang", image, "KaretLang", menu)
+        self.icon = Icon("Korean Toaster", image, "KRT", menu)
         self.tray_thread = threading.Thread(target=self.icon.run)
         self.tray_thread.daemon = True
         self.tray_thread.start()
