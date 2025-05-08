@@ -3,7 +3,7 @@
   "packageManager": "yarn@4.6.0",
   "scripts": {
     "setup": "pip install -r requirements.txt",
-    "build": "pyinstaller -w -n KoreanToaster -i icon.ico -y --add-data _internal/resources:. --clean main.py",
+    "build": "pyinstaller -w -n KoreanToaster -i icon.ico -y --add-data _internal/resources:resources --clean main.py",
     "dev": "py main.py"
   }
 }
