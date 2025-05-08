@@ -260,7 +260,7 @@ class App:
     def register_keyboard_monitor(self):
         def callback(e: keyboard.KeyboardEvent):
             if e.event_type == 'down':
-                time.sleep(0.01) # make sure ime mode is updated before calling SendMessage
+                time.sleep(0.05) # make sure ime mode is updated before calling SendMessage
                 self.language_detector.update()
                 if (key := self.language_detector.get_current_language()) is None:
                     return
