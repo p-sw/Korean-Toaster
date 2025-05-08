@@ -196,6 +196,14 @@ class App:
                     MenuItem('1/8(기본)', lambda: self.set_window_size(1/8), radio=True, default=True, checked=lambda x: self.conf.window_size_ratio == 1/8),
                 )
             ),
+            MenuItem(
+                '다중 모니터 설정',
+                Menu(
+                    MenuItem('항상 주 모니터에 표시', lambda: self.set_monitor_conf(E_MONITORCONF.PRIMARY), radio=True, checked=lambda x: self.conf.monitor_conf == E_MONITORCONF.PRIMARY, default=True),
+                    MenuItem('커서가 있는 모니터에 표시', lambda: self.set_monitor_conf(E_MONITORCONF.CURSOR), radio=True, checked=lambda x: self.conf.monitor_conf == E_MONITORCONF.CURSOR),
+                    MenuItem('활성 윈도우가 있는 모니터에 표시', lambda: self.set_monitor_conf(E_MONITORCONF.FOCUSED), radio=True, checked=lambda x: self.conf.monitor_conf == E_MONITORCONF.FOCUSED),
+                )
+            ),
             MenuItem('설정 다시 불러오기', self.conf.load_from_json),
             MenuItem('종료', self.quit),
         )
