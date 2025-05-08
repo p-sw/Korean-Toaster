@@ -12,7 +12,7 @@ import json
 import pyglet
 
 def build_resource(p):
-    return "_internal/" + p
+    return "_internal/resources/" + p
 
 pyglet.font.add_file(build_resource("Pretendard-Regular.otf"))
 
