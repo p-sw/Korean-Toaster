@@ -2,3 +2,4 @@
 config.json
 build/
 dist/
+__pycache__
