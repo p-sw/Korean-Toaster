@@ -268,6 +268,7 @@ class App:
     
     def register_keyboard_monitor(self):
         def callback(e: keyboard.KeyboardEvent):
+            if e.name == 'alt': return # passing left alt
             if e.event_type == 'down':
                 time.sleep(0.05) # make sure ime mode is updated before calling SendMessage
                 self.language_detector.update()
