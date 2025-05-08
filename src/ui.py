@@ -102,6 +102,11 @@ class AppUI:
         self.fade_timer = self.root.after(500, self.fade_out)
 
     def fade_out(self):
+        if self.conf.fade_duration == 0:
+            self.root.attributes('-alpha', 0)
+            self.root.update()
+            return
+
         self.fading = True
         steps = int(self.conf.fade_duration / self.fade_step)
         for i in range(steps, -1, -1):
@@ -111,6 +116,7 @@ class AppUI:
             self.root.attributes('-alpha', alpha)
             self.root.update()
             time.sleep(self.fade_step)
+        self.fading = False
 
     def run(self):
         self.root.mainloop()
