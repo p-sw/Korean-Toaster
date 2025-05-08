@@ -175,7 +175,7 @@ class App:
         self.conf.save_to_json()
 
     def setup_tray_icon(self):
-        image = Image.open("icon.png")
+        image = Image.open("_internal/icon.png")
         menu = (
             MenuItem(
                 '창 애니메이션 속도',
