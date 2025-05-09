@@ -5,23 +5,20 @@ class KeyboardMonitor:
     type Event = k.KeyboardEvent
     type Hook = Callable[[k.KeyboardEvent], None]
 
-    hooks = []
+    hook_removers: list[Callable[[], None]] = []
 
     def __init__(self):
         self.register_hooks()
     
     def register_hooks(self, *hooks: tuple[int, Hook]):
-        registered = []
         for key, callback in hooks:
-            hook_id = k.hook_key(key, callback)
-            self.hooks.append(hook_id)
-            registered.append(hook_id)
-        return registered
+            hook_remover = k.hook_key(key, callback)
+            self.hook_removers.append(hook_remover)
     
     def unregister_hooks(self, *hooks: list[int]):
-        for hook in [i for i in hooks if i in self.hooks]:
-            k.unhook(hook)
-            self.hooks.remove(hook)
+        for hook_remover in [i for i in hooks if i in self.hook_removers]:
+            hook_remover()
+            self.hook_removers.remove(hook_remover)
     
     def unregister_all(self):
         for hook in self.hooks:

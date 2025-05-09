@@ -6,7 +6,7 @@ from src.tray import AppTray
 from src.utils import build_resource
 from src.conf import Configuration
 from src.cpp import LanguageDetector
-from src.keyboard import KeyboardMonitor
+from monitor import KeyboardMonitor
 
 import src.constants as c
 
