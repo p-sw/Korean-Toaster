@@ -13,6 +13,7 @@ def initialize():
         level=logging.INFO,
         format="%(asctime)s - %(levelname)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
+        filemode="w"
     )
     LOGGER_INITIALIZED = True
 
@@ -25,7 +26,6 @@ class KeyPressLogger:
     def __init__(self):
         self.logger = get_logger("KeyPressLogger")
         keyboard.hook(self.callback)
-
         self.logger.info("KeyPressLogger initialized")
 
     def callback(self, e: keyboard.KeyboardEvent):
