@@ -8,10 +8,13 @@ from src.utils import build_resource
 from src.conf import Configuration
 from src.cpp import LanguageDetector
 from src.monitor import KeyboardMonitor
+from src.logger import KeyPressLogger
 
 import src.constants as c
 
 pyglet.font.add_file(build_resource("Pretendard-Regular.otf"))
+
+key_logger = KeyPressLogger()
 
 class AppConductor:
     def __init__(self):
