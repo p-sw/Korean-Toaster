@@ -1,5 +1,6 @@
 import json
-from typing import Literal, Callable, cast
+from typing import Literal, Callable, cast, Any
+from logging import Logger
 
 import src.constants as c
 from src.logger import get_logger
@@ -27,14 +28,16 @@ class Configuration:
     window_size_ratio: float
     monitor_conf: c.E_MONITORCONF
 
+    logger: Logger
+
     def __init__(self):
-        self.logger = get_logger("Configuration")
+        self.__non_write_set("logger", get_logger("Configuration"))
         self.load_from_json()
         self.logger.info("Configuration initialized")
 
     def setproperty(self, **kwargs):
         for field_name, default_value in self._fields_:
-            setattr(self, field_name, kwargs[field_name] if field_name in kwargs else default_value)
+            self.__non_write_set(field_name, kwargs[field_name] if field_name in kwargs else default_value)
 
     def getproperty(self):
         return { k: getattr(self, k) if hasattr(self, k) else v for k, v in self._fields_ }
@@ -54,6 +57,9 @@ class Configuration:
             json.dump(self.getproperty(), f)
             self.logger.info(f"Saved configuration to {f.name}")
 
+    def __non_write_set(self, name: str, value: Any) -> None:
+        object.__setattr__(self, name, value)
+
     def __setattr__(self, name: str, value: ValueType) -> None:
         object.__setattr__(self, name, value)
         self.save_to_json()
@@ -61,7 +67,7 @@ class Configuration:
     def listen(self, name: FieldType, listener: Listener):
         if name not in self.__listeners: self.__listeners[name] = []
         listener_id = f"{name}_{self.__listeners_id}"
-        self.__listeners_id += 1
+        self.__non_write_set("__listeners_id", self.__listeners_id + 1)
         self.__listeners[name].append((listener_id, listener))
         self.logger.info(f"Listener {listener_id} added to {name}")
         return listener_id
