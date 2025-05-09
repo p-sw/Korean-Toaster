@@ -1,5 +1,5 @@
 import json
-from typing import Literal, Callable
+from typing import Literal, Callable, cast
 
 import src.constants as c
 
@@ -9,7 +9,7 @@ class Configuration:
         Literal["window_lifetime"] | \
         Literal["window_size_ratio"] | \
         Literal["monitor_conf"]
-    type ValueType = int
+    type ValueType = int | float
     type Listener = Callable[[ValueType], None]
     
     __listeners_id: int = 0
@@ -44,7 +44,7 @@ class Configuration:
         with open("config.json", "w") as f:
             json.dump(self.getproperty(), f)
     
-    def __setattr__(self, name: FieldType, value: ValueType) -> None:
+    def __setattr__(self, name: str, value: ValueType) -> None:
         object.__setattr__(self, name, value)
         self.save_to_json()
     
@@ -56,5 +56,5 @@ class Configuration:
         return listener_id
     
     def forget(self, _id: str):
-        attrname = '_'.join(_id.split('_')[:-1])
-        self._listeners[attrname] = list(filter(lambda lid, _: lid != _id, self.__listeners[attrname]))
+        attrname = cast(Configuration.FieldType, '_'.join(_id.split('_')[:-1]))
+        self.__listeners[attrname] = list(filter(lambda lid: lid[0] != _id, self.__listeners[attrname]))
