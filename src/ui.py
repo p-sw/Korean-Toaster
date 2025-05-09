@@ -82,9 +82,11 @@ class AppUI:
         self.label.place(relx=0.5, rely=0.5, anchor=tkinter.CENTER)
         self.logger.info("AppUI initialized")
 
-    def update_geometry(self, screen_x=0, screen_y=0, screen_width=None, screen_height=None):
-        if screen_width is None: screen_width = self.screen_width
-        if screen_height is None: screen_height = self.screen_height
+    def update_geometry(self, screen_x=0, screen_y=0, screen_rx=None, screen_ry=None):
+        if screen_rx is None: screen_width = self.screen_width
+        else: screen_width = screen_rx - screen_x
+        if screen_ry is None: screen_height = self.screen_height
+        else: screen_height = screen_ry - screen_y
 
         y_padding = 50
 
