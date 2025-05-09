@@ -42,8 +42,11 @@ class AppConductor:
         self.keyboard.unregister_all()
     
     def hangeul_handler(self, e: KeyboardMonitor.Event):
-        if e.name in ['alt', 'left alt']: # ignoring left alt
+        if self.conf.ignore_left_alt and e.name in ['alt', 'left alt']: # ignoring left alt
             self.logger.info(f"Ignoring left alt ({e.name})")
+            return
+        if self.conf.ignore_right_alt and e.name is not None and 'right' in e.name: # ignoring right alt
+            self.logger.info(f"Ignoring right alt ({e.name})")
             return
         if e.event_type == 'down':
             time.sleep(0.05) # make sure ime mode is updated before calling SendMessage

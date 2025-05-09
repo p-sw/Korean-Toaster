@@ -10,8 +10,10 @@ class Configuration:
         Literal["fade_duration"] | \
         Literal["window_lifetime"] | \
         Literal["window_size_ratio"] | \
-        Literal["monitor_conf"]
-    type ValueType = int | float
+        Literal["monitor_conf"] | \
+        Literal["ignore_left_alt"] | \
+        Literal["ignore_right_alt"]
+    type ValueType = int | float | bool
     type Listener = Callable[[ValueType], None]
     
     __listeners_id: int = 0
@@ -20,13 +22,17 @@ class Configuration:
         ("fade_duration", 0.5),
         ("window_lifetime", 0.5),
         ("window_size_ratio", 1/8),
-        ("monitor_conf", c.E_MONITORCONF.PRIMARY)
+        ("monitor_conf", c.E_MONITORCONF.PRIMARY),
+        ("ignore_left_alt", True),
+        ("ignore_right_alt", False)
     ]
 
     fade_duration: float
     window_lifetime: float
     window_size_ratio: float
     monitor_conf: c.E_MONITORCONF
+    ignore_left_alt: bool
+    ignore_right_alt: bool
 
     logger: Logger
 
