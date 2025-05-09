@@ -4,31 +4,39 @@ import threading
 
 from src.conf import Configuration
 from src.utils import build_resource
+from src.logger import get_logger
 import src.constants as c
 
 class AppTray:
     def __init__(self, config: Configuration, global_quit):
+        self.logger = get_logger("AppTray")
+        self.logger.info("Initializing AppTray")
+
         self.conf = config
         self.global_quit = global_quit
         self.setup_tray_icon()
     
     def set_fadeout_speed(self, speed):
         def _():
+            self.logger.info(f"fade_duration to {speed}")
             self.conf.fade_duration = speed
         return _
     
     def set_window_size(self, size):
         def _():
+            self.logger.info(f"window_size_ratio to {size}")
             self.conf.window_size_ratio = size
         return _
     
     def set_monitor_conf(self, val):
         def _():
+            self.logger.info(f"monitor_conf to {val}")
             self.conf.monitor_conf = val
         return _
 
     def set_window_lifetime(self, time):
         def _():
+            self.logger.info(f"window_lifetime to {time}")
             self.conf.window_lifetime = time
         return _
 
@@ -76,11 +84,14 @@ class AppTray:
         )
 
         self.icon = Icon("Korean Toaster", image, "KRT", menu)
-    
+        self.logger.info("AppTray initialized")
+
     def run(self):
+        self.logger.info("Running AppTray")
         self.tray_thread = threading.Thread(target=self.icon.run)
         self.tray_thread.daemon = True
         self.tray_thread.start()
     
     def quit(self):
+        self.logger.info("Quitting AppTray")
         self.icon.stop()

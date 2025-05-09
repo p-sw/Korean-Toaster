@@ -2,6 +2,7 @@ import ctypes
 import ctypes.wintypes
 
 import src.constants as c
+from src.logger import get_logger
 
 class MONITORINFO(ctypes.Structure):
     _fields_ = [
@@ -15,12 +16,16 @@ user32 = ctypes.windll.user32
 imm32 = ctypes.windll.imm32
 
 class LanguageDetector:
-    key_state = 0
+    def __init__(self):
+        self.logger = get_logger("LanguageDetector")
+        self.key_state = 0
+
     def update(self):
         hWnd = user32.GetForegroundWindow()
         hIMEWnd = imm32.ImmGetDefaultIMEWnd(hWnd)
         conversion_status = user32.SendMessageW(hIMEWnd, c.WM_IME_CONTROL, c.IMC_GETCONVERSIONMODE, 0)
         self.key_state = conversion_status
+        self.logger.info(f"Key state: {self.key_state}")
     def is_hangul(self):
         return self.key_state == c.KOREAN_MODE
     def is_english(self):
@@ -30,6 +35,8 @@ class LanguageDetector:
     def get_current_language_str(self):
         return result if (result := self.get_current_language()) is not None else '?'
 
+
+get_monitor_rect_logger = get_logger("get_monitor_rect")
 def get_monitor_rect(by: c.E_MONITORCONF):
     if by == c.E_MONITORCONF.PRIMARY: return [0, 0, None, None]
 
@@ -46,10 +53,11 @@ def get_monitor_rect(by: c.E_MONITORCONF):
         hmonitor = user32.MonitorFromWindow(hwnd, c.MONITOR_DEFAULTTONEAREST)
     
     if hmonitor is None:
-        # failed to get monitor handle
+        get_monitor_rect_logger.error("Failed to get monitor handle")
         return [0, 0, None, None]
     
     user32.GetMonitorInfoW(hmonitor, ctypes.byref(minfo))
+    get_monitor_rect_logger.info(f"Monitor rect: [{minfo.rcMonitor.left}, {minfo.rcMonitor.top}, {minfo.rcMonitor.right}, {minfo.rcMonitor.bottom}]")
     return [
         minfo.rcMonitor.left,
         minfo.rcMonitor.top,

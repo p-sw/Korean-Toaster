@@ -5,6 +5,7 @@ import time
 
 from src.conf import Configuration
 from src.cpp import get_monitor_rect
+from src.logger import get_logger
 import src.constants as c
 
 class RoundFrame(tkinter.Canvas):
@@ -47,9 +48,12 @@ class AppUI:
     conf_listeners = []
 
     def __init__(self, config: Configuration, initial: str):
+        self.logger = get_logger("AppUI")
+        self.logger.info("Initializing AppUI")
+
         self.conf = config
-        self.conf_listeners.append(self.conf.listen("window_size_ratio", self.update_geometry))
-        self.conf_listeners.append(self.conf.listen("monitor_conf", self.update_geometry))
+        self.conf_listeners.append(self.conf.listen("window_size_ratio", lambda _: self.update_geometry()))
+        self.conf_listeners.append(self.conf.listen("monitor_conf", lambda _: self.update_geometry()))
 
         self.root = tkinter.Tk()
         self.root.overrideredirect(True)
@@ -60,6 +64,7 @@ class AppUI:
 
         self.screen_width = self.root.winfo_screenwidth()
         self.screen_height = self.root.winfo_screenheight()
+        self.logger.info(f"Screen size: {self.screen_width}x{self.screen_height}")
 
         self.update_geometry()
 
@@ -75,6 +80,7 @@ class AppUI:
         
         self.label = tkinter.ttk.Label(self.frame, text=initial, style="Language.TLabel")
         self.label.place(relx=0.5, rely=0.5, anchor=tkinter.CENTER)
+        self.logger.info("AppUI initialized")
 
     def update_geometry(self, screen_x=0, screen_y=0, screen_width=None, screen_height=None):
         if screen_width is None: screen_width = self.screen_width
@@ -87,7 +93,8 @@ class AppUI:
         x = int(screen_width // 2 - width // 2) + screen_x
         y = int(screen_height - height - y_padding) + screen_y
         self.root.geometry(f"{width}x{height}+{x}+{y}")
-    
+        self.logger.info(f"Updated geometry: {width}x{height}+{x}+{y}, screen_anchor: [{screen_x}, {screen_y}]")
+
     def show_popup(self, text):
         if self.fade_timer:
             self.root.after_cancel(self.fade_timer)
@@ -119,7 +126,9 @@ class AppUI:
         self.fading = False
 
     def run(self):
+        self.logger.info("Running AppUI")
         self.root.mainloop()
     
     def quit(self):
+        self.logger.info("Quitting AppUI")
         self.root.destroy()
