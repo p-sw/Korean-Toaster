@@ -12,7 +12,8 @@ class Configuration:
         Literal["window_size_ratio"] | \
         Literal["monitor_conf"] | \
         Literal["ignore_left_alt"] | \
-        Literal["ignore_right_alt"]
+        Literal["ignore_right_alt"] | \
+        Literal["initial_alpha"]
     type ValueType = int | float | bool
     type Listener = Callable[[ValueType], None]
     
@@ -24,7 +25,8 @@ class Configuration:
         ("window_size_ratio", 1/8),
         ("monitor_conf", c.E_MONITORCONF.PRIMARY),
         ("ignore_left_alt", True),
-        ("ignore_right_alt", False)
+        ("ignore_right_alt", False),
+        ("initial_alpha", 1.0)
     ]
 
     fade_duration: float
@@ -33,6 +35,7 @@ class Configuration:
     monitor_conf: c.E_MONITORCONF
     ignore_left_alt: bool
     ignore_right_alt: bool
+    initial_alpha: float
 
     logger: Logger
 

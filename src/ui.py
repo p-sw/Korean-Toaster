@@ -106,7 +106,7 @@ class AppUI:
         self.update_geometry(*get_monitor_rect(self.conf.monitor_conf))
 
         self.label.config(text=text)
-        self.root.attributes('-alpha', 1.0)
+        self.root.attributes('-alpha', self.conf.initial_alpha)
 
         self.fade_timer = self.root.after(int(self.conf.window_lifetime * 1000), self.fade_out)
 
@@ -121,7 +121,7 @@ class AppUI:
         for i in range(steps, -1, -1):
             if not self.fading:
                 return
-            alpha = i / steps
+            alpha = (i / steps) * self.conf.initial_alpha
             self.root.attributes('-alpha', alpha)
             self.root.update()
             time.sleep(self.fade_step)

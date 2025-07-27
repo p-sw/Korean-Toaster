@@ -40,6 +40,12 @@ class AppTray:
             self.conf.window_lifetime = time
         return _
 
+    def set_initial_alpha(self, alpha):
+        def _():
+            self.logger.info(f"initial_alpha to {alpha}")
+            self.conf.initial_alpha = alpha
+        return _
+
     def setup_tray_icon(self):
         image = Image.open(build_resource("icon.png"))
         menu = (
@@ -61,6 +67,16 @@ class AppTray:
                     MenuItem('1초', self.set_fadeout_speed(1), radio=True, checked=lambda x: self.conf.fade_duration == 1),
                     MenuItem('2초', self.set_fadeout_speed(2), radio=True, checked=lambda x: self.conf.fade_duration == 2),
                     MenuItem('3초', self.set_fadeout_speed(3), radio=True, checked=lambda x: self.conf.fade_duration == 3),
+                )
+            ),
+            MenuItem(
+                '창 시작 투명도',
+                Menu(
+                    MenuItem('30%', self.set_initial_alpha(0.3), radio=True, checked=lambda x: self.conf.initial_alpha == 0.3),
+                    MenuItem('50%', self.set_initial_alpha(0.5), radio=True, checked=lambda x: self.conf.initial_alpha == 0.5),
+                    MenuItem('70%', self.set_initial_alpha(0.7), radio=True, checked=lambda x: self.conf.initial_alpha == 0.7),
+                    MenuItem('90%', self.set_initial_alpha(0.9), radio=True, checked=lambda x: self.conf.initial_alpha == 0.9),
+                    MenuItem('100% (불투명)', self.set_initial_alpha(1.0), radio=True, checked=lambda x: self.conf.initial_alpha == 1.0, default=True),
                 )
             ),
             MenuItem(
